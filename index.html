@@ -8,6 +8,15 @@
 </head>
 <body>
     <h1>Face Detection Demo</h1>
+    <div class="controls">
+        <label for="resolution">Resolution:</label>
+        <select id="resolution">
+            <option value="320x240">320x240</option>
+            <option value="640x480" selected>640x480</option>
+            <option value="1280x720">1280x720</option>
+        </select>
+        <button id="flip-camera">Flip Camera</button>
+    </div>
     <video id="video" width="640" height="480" autoplay></video>
     <canvas id="canvas" width="640" height="480"></canvas>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
