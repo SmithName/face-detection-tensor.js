@@ -1,13 +1,26 @@
 const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+const resolutionSelect = document.getElementById('resolution');
+const flipButton = document.getElementById('flip-camera');
 
-async function setupCamera() {
-    const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 640, height: 480 },
+let model, currentStream;
+let isFlipped = false;
+
+async function setupCamera(resolution) {
+    if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+    }
+
+    const [width, height] = resolution.split('x').map(Number);
+    const constraints = {
+        video: { width, height, facingMode: isFlipped ? 'user' : 'environment' },
         audio: false
-    });
-    video.srcObject = stream;
+    };
+
+    currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+    video.srcObject = currentStream;
+
     return new Promise((resolve) => {
         video.onloadedmetadata = () => {
             resolve(video);
@@ -19,7 +32,7 @@ async function loadModel() {
     return await blazeface.load();
 }
 
-async function detectFaces(model) {
+async function detectFaces() {
     const predictions = await model.estimateFaces(video, false);
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -33,22 +46,32 @@ async function detectFaces(model) {
         ctx.fillRect(start[0], start[1], size[0], size[1]);
     });
 
-    requestAnimationFrame(() => detectFaces(model));
+    requestAnimationFrame(detectFaces);
 }
 
 function resizeCanvas() {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-    detectFaces(model); // Redraw faces after resizing
 }
+
+resolutionSelect.addEventListener('change', async () => {
+    await setupCamera(resolutionSelect.value);
+    resizeCanvas();
+});
+
+flipButton.addEventListener('click', async () => {
+    isFlipped = !isFlipped;
+    await setupCamera(resolutionSelect.value);
+    resizeCanvas();
+});
 
 window.addEventListener('resize', resizeCanvas);
 
 async function main() {
-    await setupCamera();
-    const model = await loadModel();
+    await setupCamera(resolutionSelect.value);
+    model = await loadModel();
     resizeCanvas();
-    detectFaces(model);
+    detectFaces();
 }
 
 main();
