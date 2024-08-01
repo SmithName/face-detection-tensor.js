@@ -42,8 +42,14 @@ async function detectFaces() {
         const end = prediction.bottomRight;
         const size = [end[0] - start[0], end[1] - start[1]];
 
+        ctx.save();
+        if (isFlipped) {
+            ctx.scale(-1, 1);
+            ctx.translate(-canvas.width, 0);
+        }
         ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
         ctx.fillRect(start[0], start[1], size[0], size[1]);
+        ctx.restore();
     });
 
     requestAnimationFrame(detectFaces);
@@ -57,12 +63,14 @@ function resizeCanvas() {
 resolutionSelect.addEventListener('change', async () => {
     await setupCamera(resolutionSelect.value);
     resizeCanvas();
+    detectFaces(); // Ensure face detection starts after resizing
 });
 
 flipButton.addEventListener('click', async () => {
     isFlipped = !isFlipped;
     await setupCamera(resolutionSelect.value);
     resizeCanvas();
+    detectFaces(); // Ensure face detection starts after flipping
 });
 
 window.addEventListener('resize', resizeCanvas);
