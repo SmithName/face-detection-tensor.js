@@ -8,6 +8,11 @@ body {
     font-family: Arial, sans-serif;
 }
 
+.controls {
+    margin-bottom: 20px;
+    display:block;
+}
+
 video, canvas {
     position: absolute;
     top: 50%;
