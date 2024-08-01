@@ -36,9 +36,18 @@ async function detectFaces(model) {
     requestAnimationFrame(() => detectFaces(model));
 }
 
+function resizeCanvas() {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    detectFaces(model); // Redraw faces after resizing
+}
+
+window.addEventListener('resize', resizeCanvas);
+
 async function main() {
     await setupCamera();
     const model = await loadModel();
+    resizeCanvas();
     detectFaces(model);
 }
 
