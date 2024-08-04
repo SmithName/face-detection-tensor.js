@@ -10,7 +10,10 @@
             overflow: hidden;
         }
         video {
-            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 0;
         }
         canvas {
             position: absolute;
@@ -49,6 +52,11 @@
         }
 
         async function detectFaces() {
+            if (!model) {
+                console.error('Model not loaded');
+                return;
+            }
+
             const predictions = await model.estimateFaces(video, false);
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
