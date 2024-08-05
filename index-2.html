@@ -50,21 +50,6 @@
       left: 0;
       z-index: 2;
     }
-    #controls {
-      margin-bottom: 10px;
-    }
-    #blend-shapes {
-      list-style-type: none;
-      padding: 0;
-    }
-    #blend-shapes li {
-      margin: 5px 0;
-      display: flex;
-      justify-content: space-between;
-    }
-    #blend-shapes .blend-shapes-label {
-      font-weight: bold;
-    }
   </style>
 </head>
 <body>
@@ -76,10 +61,6 @@
     <h1>FaceLandmarker Live Feed</h1>
     <video id="webcam" width="640" height="480" autoplay></video>
     <canvas id="output_canvas"></canvas>
-    <div id="controls">
-      <button id="webcamButton">Enable Predictions</button>
-    </div>
-    <ul id="blend-shapes"></ul>
   </div>
 
   <script type="module">
@@ -88,12 +69,10 @@
 
     let faceLandmarker;
     let runningMode = "VIDEO";
-    let webcamRunning = false;
     const videoWidth = 640;
     const video = document.getElementById("webcam");
     const canvasElement = document.getElementById("output_canvas");
     const canvasCtx = canvasElement.getContext("2d");
-    const blendShapesEl = document.getElementById("blend-shapes");
 
     async function createFaceLandmarker() {
       const filesetResolver = await FilesetResolver.forVisionTasks(
@@ -104,32 +83,18 @@
           modelAssetPath: `https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task`,
           delegate: "GPU"
         },
-        outputFaceBlendshapes: true,
+        outputFaceBlendshapes: false, // Disable blend shapes
         runningMode,
         numFaces: 1
       });
-      document.getElementById("controls").classList.remove("invisible");
-    }
-    createFaceLandmarker();
-
-    function hasGetUserMedia() {
-      return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+      startVideo();
     }
 
-    if (hasGetUserMedia()) {
-      document.getElementById("webcamButton").addEventListener("click", enableCam);
-    } else {
-      console.warn("getUserMedia() is not supported by your browser");
-    }
-
-    function enableCam() {
+    function startVideo() {
       if (!faceLandmarker) {
         console.log("Wait! faceLandmarker not loaded yet.");
         return;
       }
-
-      webcamRunning = !webcamRunning;
-      this.innerText = webcamRunning ? "Disable Predictions" : "Enable Predictions";
 
       const constraints = { video: true };
 
@@ -155,6 +120,7 @@
         runningMode = "VIDEO";
         await faceLandmarker.setOptions({ runningMode });
       }
+
       let startTimeMs = performance.now();
       if (lastVideoTime !== video.currentTime) {
         lastVideoTime = video.currentTime;
@@ -172,32 +138,13 @@
             drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_RIGHT_IRIS, { color: "#FF3030" });
             drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_LEFT_IRIS, { color: "#30FF30" });
           }
-          drawBlendShapes(blendShapesEl, results.faceBlendshapes);
         }
       }
 
-      if (webcamRunning) {
-        window.requestAnimationFrame(predictWebcam);
-      }
+      window.requestAnimationFrame(predictWebcam);
     }
 
-    function drawBlendShapes(el, blendShapes) {
-      if (!blendShapes.length) {
-        el.innerHTML = "";
-        return;
-      }
-
-      let htmlMaker = "";
-      blendShapes[0].categories.forEach(shape => {
-        htmlMaker += `
-          <li>
-            <span class="blend-shapes-label">${shape.displayName || shape.categoryName}</span>
-            <span class="blend-shapes-value" style="width: calc(${+shape.score * 100}% - 120px)">${(+shape.score).toFixed(4)}</span>
-          </li>
-        `;
-      });
-      el.innerHTML = htmlMaker;
-    }
+    createFaceLandmarker();
   </script>
 </body>
 </html>
